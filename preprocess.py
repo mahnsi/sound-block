@@ -1,4 +1,5 @@
 import librosa as lr
+import numpy as np
 
 # n_fft is the number of samples in each FFT window. so the size of the window.
 n_fft = 1024
@@ -32,19 +33,44 @@ def estimate_pitch(waveform, sr):
 
 def loudness(waveform):
     # loudness is the perceived volume of the audio signal
-    # typically rms (root mean square) is used to measure loudness
-    rms = lr.feature.rms(y=waveform, frame_length=n_fft, hop_length=hop_length)
+    # typically rms (root mean square) is used to measure loudness as it is direcly proportional to the amplitude.
+    rms = lr.feature.rms(y=waveform, frame_length=n_fft, hop_length=hop_length)[0]
+    print("RMS:", rms[:10])
+    print("Min RMS:", np.min(rms))
+    print("Max RMS:", np.max(rms))
+    # convert to dB
+    # dB scale makes it feel more like how we perceive changes in loudness
+    # top_db is a parameter that limits how much dynamic range (in decibels) is displayed in the output. useful for ignoring very quiet sounds
+    loudness_db = lr.amplitude_to_db(rms, ref=np.mean(rms), top_db=None) # equivalent to 20 * log10(rms)   equivalent to power_to_db
+    return loudness_db
 
 def timbre():
     spectral_centroid = []
     return spectral_centroid
 
+def normalize(arr):
+    # normalize the array to the range [0, 1]
+    arr_min = arr.min()
+    arr_max = arr.max()
+    return (arr - arr_min) / (arr_max - arr_min)
+
 def main():
     #path = input("path to the audio file: ")
     path = "MulberryMouse.mp3"
     waveform, sr = preprocess_audio(path)
+    #print(waveform[:100])
+    print(np.max(np.abs(waveform)))
+
     f0 = estimate_pitch(waveform, sr)
     print(f"Estimated pitch (f0): {f0}")
+
+    loudness_db = loudness(waveform)
+    print(np.all(loudness_db == loudness_db[0]))
+    print(f"Loudness (dB): {loudness_db}")
+
+    #print("Min db:", np.min(loudness_db))
+    #print("Max db:", np.max(loudness_db))
+    #print(np.unique(loudness_db[:30]))
 
 if __name__ == "__main__":
     main()
