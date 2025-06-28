@@ -41,12 +41,22 @@ def loudness(waveform):
     # convert to dB
     # dB scale makes it feel more like how we perceive changes in loudness
     # top_db is a parameter that limits how much dynamic range (in decibels) is displayed in the output. useful for ignoring very quiet sounds
-    loudness_db = lr.amplitude_to_db(rms, ref=np.mean(rms), top_db=None) # equivalent to 20 * log10(rms)   equivalent to power_to_db
+    # ref is the reference value for the dB calculation.
+    loudness_db = lr.amplitude_to_db(rms, ref=np.median(rms), top_db=None) # equivalent to 20 * log10(rms)   equivalent to power_to_db
     return loudness_db
 
-def timbre():
-    spectral_centroid = []
+def timbre(waveform):
+    # spectral centroid is a measure of the "center of mass" of the spectrum, indicating where the center of the frequency distribution is located
+    spectral_centroid = lr.feature.spectral_centroid(y=waveform, n_fft=n_fft, hop_length=hop_length)
+    
     return spectral_centroid
+
+def note_only(freq):
+    pass
+
+def pitch_octave_only(freq):
+    pass
+
 
 def normalize(arr):
     # normalize the array to the range [0, 1]
@@ -63,6 +73,7 @@ def main():
 
     f0 = estimate_pitch(waveform, sr)
     print(f"Estimated pitch (f0): {f0}")
+    print("pitch to note:", lr.hz_to_note(f0))
 
     loudness_db = loudness(waveform)
     print(np.all(loudness_db == loudness_db[0]))
@@ -71,6 +82,9 @@ def main():
     #print("Min db:", np.min(loudness_db))
     #print("Max db:", np.max(loudness_db))
     #print(np.unique(loudness_db[:30]))
+
+    spectral_centroid = timbre(waveform)
+    print(f"Spectral centroid: {spectral_centroid}")
 
 if __name__ == "__main__":
     main()
