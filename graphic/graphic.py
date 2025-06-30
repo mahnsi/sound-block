@@ -1,23 +1,6 @@
 from vispy import scene
 from vispy.visuals.transforms import STTransform
-
-#create Sphere class to call .plot on it ?
-
-def build_axes():
-    pass
-
-def activate(x, y, z):
-    #activate a singular point on the 3D graph.
-    pass
-
-def build_grid():
-    # STTransform
-    # plot each point
-    pass
-
-def draw_sphere(radius=1, rows=None, cols=None, depth=None):
-    method='latitude'
-    pass
+import Grid
 
 ####### example #######
 canvas = scene.SceneCanvas(keys='interactive', bgcolor = 'black', size=(800, 600), show=True)
