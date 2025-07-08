@@ -15,4 +15,7 @@ grid.draw(view)
 
 view.camera.set_range(x=[-p, p])
 
+# activate a point (test)
+grid.activate(0, 0, 0)
+
 canvas.app.run()
