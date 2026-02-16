@@ -40,12 +40,14 @@ class Visualizer:
             self.timer.stop()
             return
 
+        # map the current frame's features to grid coordinates 
         x, y, z = self.mapper.map_frame(
             self.pitch[self.frame_index],
             self.loudness[self.frame_index],
             self.centroid[self.frame_index]
         )
 
+        #activate the corresponding point on the grid
         self.grid.activate(x, y, z)
         self.frame_index += 1
 

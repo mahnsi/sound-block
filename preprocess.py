@@ -50,7 +50,7 @@ def loudness(waveform):
 
 def timbre(waveform):
     # spectral centroid is a measure of the "center of mass" of the spectrum, indicating where the center of the frequency distribution is located
-    spectral_centroid = lr.feature.spectral_centroid(y=waveform, n_fft=n_fft, hop_length=hop_length)
+    spectral_centroid = lr.feature.spectral_centroid(y=waveform, n_fft=n_fft, hop_length=hop_length)[0]
     
     return spectral_centroid
 
@@ -89,3 +89,12 @@ def extract_features(path):
     print(f"Spectral centroid: {spectral_centroid}")
 
     return f0, loudness_db, spectral_centroid
+
+def extract_normalized_features(path):
+    f0, rms, centroid = extract_features(path)
+    
+    f0 = normalize(f0)
+    rms = normalize(rms)
+    centroid = normalize(centroid)
+
+    return f0, rms, centroid
