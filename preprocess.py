@@ -7,6 +7,8 @@ n_fft = 1024
 hop_length = 256 
 # the above combination is good for rapid updates and fine for no speech
 
+sr = 44100  # standard sampling rate for audio
+
 def preprocess_audio(path):
     # waveform is the audio signal as a numpy array (1D for now)
     # sr is the sampling rate which tells you how many times per second the audio wave is measured 
@@ -67,9 +69,6 @@ def normalize(arr):
 
 
 def extract_features(path):
-    #path = input("path to the audio file: ")
-    path = "MulberryMouse.mp3"
-
     waveform, sr = preprocess_audio(path)
     #print(waveform[:100])
     print(np.max(np.abs(waveform)))
