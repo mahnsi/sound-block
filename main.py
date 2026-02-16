@@ -4,29 +4,21 @@ from adapter import FeatureMapper
 from Grid import Grid
 from graphic import Visualizer
 
-p=8 #grid size
+GRID_SIZE=8 #grid size
 
 def main():
-    #path = input("path to the audio file: ")
-    path = "MulberryMouse.mp3"
-    waveform, sr = preprocess_audio(path)
-    #print(waveform[:100])
-    print(np.max(np.abs(waveform)))
+    mapper = FeatureMapper(GRID_SIZE)
+    grid = Grid(GRID_SIZE, GRID_SIZE, GRID_SIZE)
 
-    f0 = estimate_pitch(waveform, sr)
-    print(f"Estimated pitch (f0): {f0}")
-    print("pitch to note:", lr.hz_to_note(f0))
+    visualizer = Visualizer(
+        grid,
+        mapper,
+        (f0, rms, centroid),
+        hop_length,
+        SR
+    )
 
-    loudness_db = loudness(waveform)
-    print(np.all(loudness_db == loudness_db[0]))
-    print(f"Loudness (dB): {loudness_db}")
-
-    #print("Min db:", np.min(loudness_db))
-    #print("Max db:", np.max(loudness_db))
-    #print(np.unique(loudness_db[:30]))
-
-    spectral_centroid = timbre(waveform)
-    print(f"Spectral centroid: {spectral_centroid}")
+    visualizer.run()
 
 if __name__ == "__main__":
     main()
