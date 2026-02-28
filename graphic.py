@@ -63,9 +63,9 @@ class Visualizer:
         
         # map the current frame's features to grid coordinates 
         x, y, z = self.mapper.map_frame(
-            self.pitch[current_frame],
-            self.loudness[current_frame],
-            self.centroid[current_frame]
+            self.pitch[current_frame], #left-right
+            self.centroid[current_frame], #depth
+            self.loudness[current_frame], #up-down 
         )
 
         #activate the corresponding point on the grid

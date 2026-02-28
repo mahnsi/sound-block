@@ -4,7 +4,8 @@ import numpy as np
 # n_fft is the number of samples in each FFT window. so the size of the window.
 n_fft = 1024
 # hop_length is how many samples the window moves forward in time for each step
-hop_length = 256 
+#hop_length = 256
+hop_length = 512 
 # the above combination is good for rapid updates and fine for no speech
 
 def preprocess_audio(path):
@@ -19,7 +20,7 @@ def preprocess_audio(path):
         print(f"Error loading audio file: {e}")
         return None, None
 
-def estimate_pitch_slow(waveform, sr):
+def estimate_pitch_confidence(waveform, sr):
     fmin = lr.note_to_hz('C2')
     fmax = lr.note_to_hz('C7')
     
@@ -42,6 +43,7 @@ def estimate_pitch(waveform, sr):
     # YIN is a pitch estimation algorithm
     # f0 (fundamental frequency) will contain the detected pitc in Hz for each time frame a numpy array of size len(waveform) / hop_length
     f0 = lr.yin(waveform, fmin=fmin, fmax=fmax, sr=sr, frame_length=n_fft, hop_length=hop_length)
+    f0[f0 > 1500] = np.nan # # anything above ~D6 is suspicious (heuristic)
     return f0
 
 def loudness(waveform):
