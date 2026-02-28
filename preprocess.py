@@ -19,6 +19,18 @@ def preprocess_audio(path):
         print(f"Error loading audio file: {e}")
         return None, None
 
+def estimate_pitch_slow(waveform, sr):
+    fmin = lr.note_to_hz('C2')
+    fmax = lr.note_to_hz('C7')
+    
+    # pyin returns f0, voiced_flag, and voiced_probabilities
+    f0, voiced_flag, voiced_probs = lr.pyin(waveform, fmin=fmin, fmax=fmax, sr=sr, 
+                                             frame_length=n_fft, hop_length=hop_length)
+    # pyin sets unvoiced frames to nan automatically
+    # optionally zero out low-confidence frames too
+    f0[voiced_probs < 0.5] = np.nan
+    return f0
+
 def estimate_pitch(waveform, sr):
     print("Estimating pitch...")
     # pitch is the frequency of the audio signal in Hz
@@ -46,7 +58,7 @@ def loudness(waveform):
     loudness_db = lr.amplitude_to_db(rms, ref=np.median(rms), top_db=None) # equivalent to 20 * log10(rms)   equivalent to power_to_db
     return loudness_db
 
-def timbre(waveform):
+def estimate_timbre(waveform):
     # spectral centroid is a measure of the "center of mass" of the spectrum, indicating where the center of the frequency distribution is located
     spectral_centroid = lr.feature.spectral_centroid(y=waveform, n_fft=n_fft, hop_length=hop_length)[0]
     
@@ -60,19 +72,29 @@ def pitch_octave_only(freq):
 
 
 def normalize(arr):
-    # normalize the array to the range [0, 1]
-    arr_min = arr.min()
-    arr_max = arr.max()
-    return (arr - arr_min) / (arr_max - arr_min)
+    arr_min = np.nanmin(arr)
+    arr_max = np.nanmax(arr)
+
+    print ("Min:", arr_min)
+    print ("Max:", arr_max)
+
+    if arr_max == arr_min:
+        return np.zeros_like(arr)
+    normalized = (arr - arr_min) / (arr_max - arr_min)
+    normalized[np.isnan(arr)] = 0  
+    return normalized
 
 
 def extract_features(path):
     waveform, sr = preprocess_audio(path)
     print(np.max(np.abs(waveform)))
 
-    f0 = estimate_pitch(waveform, sr)
-    print(f"Estimated pitch (f0): {f0}")
-    print("pitch to note:", lr.hz_to_note(f0))
+    pitch = estimate_pitch(waveform, sr)
+    #voiced = pitch < lr.note_to_hz('C7')
+    #pitch_voiced = np.where(voiced, pitch, np.nan)
+
+    print(f"Estimated pitch (f0): {pitch}")
+    #print("pitch to note:", lr.hz_to_note(pitch))
 
     loudness_db = loudness(waveform)
     print(np.all(loudness_db == loudness_db[0]))
@@ -82,16 +104,18 @@ def extract_features(path):
     #print("Max db:", np.max(loudness_db))
     #print(np.unique(loudness_db[:30]))
 
-    spectral_centroid = timbre(waveform)
-    print(f"Spectral centroid: {spectral_centroid}")
+    timbre = estimate_timbre(waveform)
+    print(f"Spectral centroid (timbre): {timbre}")
 
-    return waveform, sr, f0, loudness_db, spectral_centroid
+    return waveform, sr, pitch, loudness_db, timbre
 
 def extract_normalized_features(path):
-    waveform, sr, f0, rms, centroid = extract_features(path)
+    # nomalizes pitch, loudness, and spectral centroid
+    waveform, sr, pitch, loudness, timbre = extract_features(path)
     
-    f0 = normalize(f0)
-    rms = normalize(rms)
-    centroid = normalize(centroid)
+    pitch = normalize(pitch)
+    #print ("Normalized pitch:", pitch)
+    loudness = normalize(loudness)
+    timbre = normalize(timbre)
 
-    return waveform, sr, f0, rms, centroid
+    return waveform, sr, pitch, loudness, timbre
