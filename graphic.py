@@ -9,8 +9,8 @@ from vispy import scene, app
 
 class Visualizer:
     def __init__(self, grid_size, features, hop_length):
-        self.grid = Grid.Grid(grid_size, grid_size, grid_size) # create grid
-        self.mapper = FeatureMapper(self.grid.x) # map the features to grid coordinates
+        self.grid = Grid.Grid(grid_size*2, grid_size, grid_size) # create grid
+        self.mapper = FeatureMapper(self.grid) # map the features to grid coordinates
 
         self.waveform, self.sr, self.pitch, self.loudness, self.centroid, = features
         self.hop_length = hop_length
@@ -43,14 +43,11 @@ class Visualizer:
         self.start_time = None
 
     def start(self):
-        sd.play(self.waveform, self.sr) # play the audio file
+        sd.play(self.waveform, samplerate=self.sr) # play the audio file
         self.start_time = time.time() # record starting wall-clock time
         self.timer.start() # start the app.Timer to start periodically calling update()
 
     def update(self, event):
-        if self.start_time is None:
-            return
-
         elapsed = time.time() - self.start_time #eleapsed time since audio began
 
         current_frame = int(

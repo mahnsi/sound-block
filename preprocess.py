@@ -1,12 +1,11 @@
 import librosa as lr
 import numpy as np
+import scipy.signal as signal
 
 # n_fft is the number of samples in each FFT window. so the size of the window.
-n_fft = 1024
+n_fft = 4096
 # hop_length is how many samples the window moves forward in time for each step
-#hop_length = 256
-hop_length = 512 
-# the above combination is good for rapid updates and fine for no speech
+hop_length = 256 
 
 def preprocess_audio(path):
     # waveform is the audio signal as a numpy array (1D for now)
@@ -20,7 +19,27 @@ def preprocess_audio(path):
         print(f"Error loading audio file: {e}")
         return None, None
 
-def estimate_pitch_confidence(waveform, sr):
+def estimate_pitch(waveform, sr):
+    print("Estimating pitch...")
+    # pitch is the frequency of the audio signal in Hz
+
+    fmin = lr.note_to_hz('C3')  
+    fmax = lr.note_to_hz('C6')
+
+    # YIN is a pitch estimation algorithm
+    # f0 (fundamental frequency) will contain the detected pitc in Hz for each time frame a numpy array of size len(waveform) / hop_length
+    f0 = lr.yin(waveform, fmin=fmin, fmax=fmax, sr=sr, frame_length=n_fft, hop_length=hop_length)
+    
+    f0[f0 > 1500] = np.nan # # anything above ~D6 is suspicious (heuristic)
+
+    f0 = signal.medfilt(f0, kernel_size=5) # median filter to smooth out the pitch contour
+    
+    #pitch perception is logarithmic. midi is a linear perception scale, so this is better for a grid like ours. 
+    pitch_midi = lr.hz_to_midi(f0)
+
+    return pitch_midi
+
+def estimate_pitch_v2(waveform, sr):
     fmin = lr.note_to_hz('C2')
     fmax = lr.note_to_hz('C7')
     
@@ -32,19 +51,15 @@ def estimate_pitch_confidence(waveform, sr):
     f0[voiced_probs < 0.5] = np.nan
     return f0
 
-def estimate_pitch(waveform, sr):
-    print("Estimating pitch...")
-    # pitch is the frequency of the audio signal in Hz
-
-    # we are interested in the pitch range of a piano, which is from C2 to C7
-    fmin = lr.note_to_hz('C2')  
+def estimate_pitch_v3(waveform, sr):
+    fmin = lr.note_to_hz('C2')
     fmax = lr.note_to_hz('C7')
-
-    # YIN is a pitch estimation algorithm
-    # f0 (fundamental frequency) will contain the detected pitc in Hz for each time frame a numpy array of size len(waveform) / hop_length
-    f0 = lr.yin(waveform, fmin=fmin, fmax=fmax, sr=sr, frame_length=n_fft, hop_length=hop_length)
-    f0[f0 > 1500] = np.nan # # anything above ~D6 is suspicious (heuristic)
-    return f0
+    
+    f0, voiced_flag, voiced_probs = lr.pyin(waveform, fmin=fmin, fmax=fmax, sr=sr,
+                                             frame_length=n_fft, hop_length=hop_length)
+    
+    pitch_midi = lr.hz_to_midi(f0) 
+    return pitch_midi
 
 def loudness(waveform):
     # loudness is the perceived volume of the audio signal
